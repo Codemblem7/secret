@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zero-Width Steganography</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 20px;
+            background: none;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            color: #6b7280;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+            margin-bottom: -2px;
+        }
+
+        .tab:hover {
+            background: #f9fafb;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .panel {
+            display: none;
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #374151;
+            font-size: 14px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            margin-bottom: 20px;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-right: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .output-box {
+            background: #f9fafb;
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            min-height: 60px;
+            word-wrap: break-word;
+            font-size: 14px;
+            color: #374151;
+        }
+
+        .output-box.empty {
+            color: #9ca3af;
+            font-style: italic;
+        }
+
+        .info-box {
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #1e40af;
+        }
+
+        .info-box strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .tab {
+                padding: 15px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 Zero-Width Steganography</h1>
+            <p>Hide secret messages in plain sight using invisible characters</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('encode')">Encode</button>
+            <button class="tab" onclick="switchTab('decode')">Decode</button>
+        </div>
+
+        <div class="content">
+            <div id="encode-panel" class="panel active">
+                <div class="info-box">
+                    <strong>How it works:</strong>
+                    Your secret message is converted to Morse code using invisible zero-width characters, then hidden at the end of your fake message. No one will know it's there!
+                </div>
+
+                <label for="secret-message">Secret Message:</label>
+                <textarea id="secret-message" rows="3" placeholder="Enter your secret message here..."></textarea>
+
+                <label for="fake-message">Fake Message (Cover Text):</label>
+                <textarea id="fake-message" rows="3" placeholder="Enter an innocent-looking message..."></textarea>
+
+                <button onclick="encode()">🔒 Encode Message</button>
+
+                <label style="margin-top: 20px;">Encoded Output:</label>
+                <div id="encoded-output" class="output-box empty">Your encoded message will appear here...</div>
+
+                <div class="button-group">
+                    <button onclick="copyToClipboard('encoded-output')">📋 Copy to Clipboard</button>
+                </div>
+            </div>
+
+            <div id="decode-panel" class="panel">
+                <div class="info-box">
+                    <strong>Decode hidden messages:</strong>
+                    Paste a message that contains hidden zero-width characters to reveal the secret message inside.
+                </div>
+
+                <label for="encoded-input">Encoded Message:</label>
+                <textarea id="encoded-input" rows="5" placeholder="Paste the encoded message here..."></textarea>
+
+                <button onclick="decode()">🔓 Decode Message</button>
+
+                <label style="margin-top: 20px;">Decoded Secret:</label>
+                <div id="decoded-output" class="output-box empty">The hidden message will appear here...</div>
+
+                <label style="margin-top: 20px;">Cover Text:</label>
+                <div id="cover-output" class="output-box empty">The fake message will appear here...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Zero-width characters for encoding
+        const ZWJ = '\u200D';  // Zero Width Joiner - represents dot (.)
+        const ZWS = '\u200B';  // Zero Width Space - represents dash (-)
+        const ZWNJ = '\u200C'; // Zero Width Non-Joiner - represents letter separator
+
+        // Morse code dictionary
+        const morseCode = {
+            'A': '.-',    'B': '-...',  'C': '-.-.',  'D': '-..',   'E': '.',
+            'F': '..-.',  'G': '--.',   'H': '....',  'I': '..',    'J': '.---',
+            'K': '-.-',   'L': '.-..',  'M': '--',    'N': '-.',    'O': '---',
+            'P': '.--.',  'Q': '--.-',  'R': '.-.',   'S': '...',   'T': '-',
+            'U': '..-',   'V': '...-',  'W': '.--',   'X': '-..-',  'Y': '-.--',
+            'Z': '--..',
+            '0': '-----', '1': '.----', '2': '..---', '3': '...--', '4': '....-',
+            '5': '.....', '6': '-....', '7': '--...', '8': '---..', '9': '----.',
+            ' ': '/'
+        };
+
+        // Reverse morse code dictionary for decoding
+        const reverseMorseCode = Object.fromEntries(
+            Object.entries(morseCode).map(([key, value]) => [value, key])
+        );
+
+        function switchTab(tab) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update panels
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.getElementById(tab + '-panel').classList.add('active');
+        }
+
+        function textToMorse(text) {
+            return text.toUpperCase().split('').map(char => {
+                return morseCode[char] || '';
+            }).filter(code => code).join(' ');
+        }
+
+        function morseToZeroWidth(morse) {
+            let result = '';
+            for (let char of morse) {
+                if (char === '.') {
+                    result += ZWJ;
+                } else if (char === '-') {
+                    result += ZWS;
+                } else if (char === ' ') {
+                    result += ZWNJ;
+                }
+            }
+            return result;
+        }
+
+        function zeroWidthToMorse(zwText) {
+            let result = '';
+            for (let char of zwText) {
+                if (char === ZWJ) {
+                    result += '.';
+                } else if (char === ZWS) {
+                    result += '-';
+                } else if (char === ZWNJ) {
+                    result += ' ';
+                }
+            }
+            return result;
+        }
+
+        function morseToText(morse) {
+            return morse.split(' ').map(code => {
+                return reverseMorseCode[code] || '';
+            }).join('');
+        }
+
+        function encode() {
+            const secretMessage = document.getElementById('secret-message').value;
+            const fakeMessage = document.getElementById('fake-message').value;
+
+            if (!secretMessage) {
+                alert('Please enter a secret message!');
+                return;
+            }
+
+            if (!fakeMessage) {
+                alert('Please enter a fake message!');
+                return;
+            }
+
+            // Convert secret message to Morse code
+            const morse = textToMorse(secretMessage);
+            
+            // Convert Morse to zero-width characters
+            const hidden = morseToZeroWidth(morse);
+            
+            // Combine fake message with hidden message
+            const encoded = fakeMessage + hidden;
+
+            const outputDiv = document.getElementById('encoded-output');
+            outputDiv.textContent = encoded;
+            outputDiv.classList.remove('empty');
+        }
+
+        function decode() {
+            const encodedMessage = document.getElementById('encoded-input').value;
+
+            if (!encodedMessage) {
+                alert('Please paste an encoded message!');
+                return;
+            }
+
+            // Extract zero-width characters
+            let zeroWidthChars = '';
+            let coverText = '';
+
+            for (let char of encodedMessage) {
+                if (char === ZWJ || char === ZWS || char === ZWNJ) {
+                    zeroWidthChars += char;
+                } else {
+                    coverText += char;
+                }
+            }
+
+            if (!zeroWidthChars) {
+                alert('No hidden message found!');
+                return;
+            }
+
+            // Convert zero-width to Morse
+            const morse = zeroWidthToMorse(zeroWidthChars);
+            
+            // Convert Morse to text
+            const secretMessage = morseToText(morse);
+
+            const decodedOutput = document.getElementById('decoded-output');
+            decodedOutput.textContent = secretMessage || '(Unable to decode)';
+            decodedOutput.classList.remove('empty');
+
+            const coverOutput = document.getElementById('cover-output');
+            coverOutput.textContent = coverText || '(No cover text)';
+            coverOutput.classList.remove('empty');
+        }
+
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            const text = element.textContent;
+
+            if (text.includes('will appear here') || !text) {
+                alert('Nothing to copy yet!');
+                return;
+            }
+
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = event.target.textContent;
+                event.target.textContent = '✓ Copied!';
+                setTimeout(() => {
+                    event.target.textContent = originalText;
+                }, 2000);
+            }).catch(err => {
+                alert('Failed to copy: ' + err);
+            });
+        }
+    </script>
+</body>
+</html>
